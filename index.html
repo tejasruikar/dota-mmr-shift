@@ -4,17 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Dota 2 rank distribution since the June 2026 MMR change</title>
-<meta name="description" content="How many players are in Crusader, Archon, and Legend before and after Valve raised lower-rank MMR gains in June 2026. Stratz percentiles via Esports Tales, live OpenDota counts.">
+<meta name="description" content="OpenDota public-profile medal counts before and after Valve raised lower-rank MMR gains in June 2026. Live fetch, daily snapshots.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Dota 2 rank distribution since the June 2026 MMR change">
-<meta property="og:description" content="Crusader, Archon, and Legend headcounts before and after wins started paying +35 to +40 at lower ranks. Stratz percentiles, live OpenDota counts, updated as new tables publish.">
+<meta property="og:description" content="How Crusader, Archon, and Legend shifted after wins started paying +35 to +40 at lower ranks. OpenDota public profiles, live plus daily snapshots.">
 <meta property="og:url" content="https://tejasruikar.github.io/dota-mmr-shift/">
 <meta property="og:image" content="https://tejasruikar.github.io/dota-mmr-shift/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <style>
-:root{--bg:#0f1115;--panel:#171a21;--line:#2a2f3a;--text:#e6e8ee;--muted:#9aa3b2;--accent:#5aa9ff;--up:#4cc38a;--down:#e5534b}
+:root{--bg:#0f1115;--panel:#171a21;--line:#2a2f3a;--text:#e6e8ee;--muted:#9aa3b2;--accent:#5aa9ff;--up:#4cc38a;--down:#e5534b;--before:#6b7280}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 main{max-width:960px;margin:0 auto;padding:24px 16px 64px}
@@ -33,25 +33,22 @@ a{color:var(--accent)}
 .up{color:var(--up)}.down{color:var(--down)}
 .controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:12px 0}
 label{color:var(--muted);font-size:14px}
-input[type=number]{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:15px;width:150px}
 input[type=range]{width:100%;margin:0}
 button{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:6px 12px;font-size:14px;cursor:pointer}
 button.on{border-color:var(--accent);color:var(--accent)}
 .chart-title{font-weight:600;margin:16px 0 4px}
 .caption{color:var(--muted);font-size:13px;margin-top:6px}
 .axis-label{font-size:12px;color:var(--muted);margin:0 0 4px 36px}
-.bars{display:flex;align-items:flex-end;gap:6px;height:260px;margin-left:36px;border-left:1px solid var(--line);border-bottom:1px solid var(--line);padding:0 4px;position:relative}
-.bars::before{content:attr(data-ymax);position:absolute;left:-36px;top:-7px;font-size:11px;color:var(--muted)}
-.bars::after{content:"0%";position:absolute;left:-24px;bottom:-7px;font-size:11px;color:var(--muted)}
-.bar-group{flex:1;display:flex;align-items:flex-end;justify-content:center;height:100%;position:relative}
-.bar{width:100%;background:var(--accent);border-radius:2px 2px 0 0;transition:height .5s ease,background .5s ease;position:relative}
-.bar .val{position:absolute;top:-18px;left:0;right:0;text-align:center;font-size:11px;color:var(--muted);white-space:nowrap}
-.xlabels{display:flex;gap:6px;margin-left:36px;padding:4px 4px 0;font-size:12px;color:var(--muted)}
+.bars{display:flex;align-items:flex-end;gap:6px;height:260px;margin-left:44px;border-left:1px solid var(--line);border-bottom:1px solid var(--line);padding:0 4px;position:relative}
+.bars::before{content:attr(data-ymax);position:absolute;left:-40px;top:-7px;font-size:11px;color:var(--muted)}
+.bars::after{content:"0%";position:absolute;left:-28px;bottom:-7px;font-size:11px;color:var(--muted)}
+.bar-group{flex:1;display:flex;align-items:flex-end;justify-content:center;height:100%;position:relative;gap:3px}
+.bar{flex:1;max-width:100%;background:var(--accent);border-radius:2px 2px 0 0;position:relative;min-height:1px}
+.bar .val{position:absolute;top:-16px;left:0;right:0;text-align:center;font-size:10px;color:var(--muted);white-space:nowrap}
+.xlabels{display:flex;gap:6px;margin-left:44px;padding:4px 4px 0;font-size:12px;color:var(--muted)}
 .xlabels div{flex:1;text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;margin:6px 0}
 .legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;background:currentColor;vertical-align:middle}
-.slider-wrap{flex:1;min-width:200px;position:relative;padding-top:10px}
-.event-marker{position:absolute;top:0;width:2px;height:10px;background:var(--down);pointer-events:none}
 svg.line{width:100%;height:auto;display:block;background:var(--panel);border:1px solid var(--line);border-radius:8px}
 .hidden{display:none}
 .stat{display:inline-block;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:6px 8px 6px 0}
@@ -69,53 +66,50 @@ td .sub{display:block;font-size:12px;color:var(--muted)}
 <body>
 <main>
 <h1>Dota 2 rank distribution since the June 2026 MMR change</h1>
-<p class="muted">From about 18 June 2026, ranked wins below roughly 4k MMR pay +35 to +40 while losses stay near −25. This page tracks what that did to the medal ladder, and keeps tracking it.</p>
+<p class="muted">From about 18 June 2026, ranked wins below roughly 4k MMR pay +35 to +40 while losses stay near −25. Counts below are OpenDota public profiles, fetched live when you open this page.</p>
 <div id="error" class="hidden" style="color:var(--down)"></div>
 
-<section id="headline">
-  <div class="controls">
-    <label for="population">Assumed ranked population</label>
-    <input id="population" type="number" min="1000" step="100000">
-  </div>
+<section id="headline" class="hidden">
   <div class="cards" id="cards"></div>
   <p class="caption" id="headline-note"></p>
   <div class="chart-title" id="medal-table-title"></div>
   <div class="tbl-wrap"><table id="medal-table"></table></div>
-  <p class="caption">Share = star-5 cumulative percentile of the medal minus that of the medal below. Count = share × population. "pt" = percentage points. Source: Stratz percentiles via Esports Tales.</p>
 </section>
 
-<section id="timeline">
-  <h2>Medal share over time</h2>
-  <p class="muted small">Drag the slider or press Play. The red tick marks 18 June 2026, when the gain change appeared.</p>
-  <div class="controls">
-    <button id="play">Play</button>
-    <div class="slider-wrap">
-      <input type="range" id="month-slider" min="0" step="1">
-      <div id="event-marker" class="event-marker"></div>
-    </div>
-    <span id="month-label" style="min-width:90px;font-weight:600"></span>
-    <button id="view-medal" class="on">8 medals</button>
-    <button id="view-star">36 stars</button>
+<section id="overlay-section" class="hidden">
+  <h2>The curve before +40 and after</h2>
+  <p class="muted small">Share of public profiles in each medal. Grey is the last OpenDota snapshot before 18 June 2026. Color is today.</p>
+  <div class="legend">
+    <span id="legend-before" style="color:var(--before)">Before</span>
+    <span id="legend-after" style="color:var(--accent)">Today</span>
   </div>
-  <div id="event-label" class="small" style="color:var(--down)"></div>
-  <div class="chart-title" id="bars-title"></div>
-  <div class="axis-label">Share of calibrated accounts (%)</div>
-  <div class="bars" id="bars"></div>
-  <div class="xlabels" id="bars-x"></div>
-  <div class="caption" id="bars-caption"></div>
+  <div class="chart-title" id="overlay-title"></div>
+  <div class="axis-label">Share of public profiles (%)</div>
+  <div class="bars" id="overlay-bars"></div>
+  <div class="xlabels" id="overlay-x"></div>
+  <div class="caption" id="overlay-caption"></div>
 </section>
 
-<section id="trend-section">
-  <h2>Crusader, Archon, and Legend since Season 6 began</h2>
-  <div class="chart-title">Share of ranked players by medal, May 2023 to latest</div>
-  <div class="legend" id="trend-legend"></div>
-  <svg class="line" id="trend" role="img" aria-label="Line chart of Crusader, Archon, and Legend share by month"></svg>
-  <div class="caption">Source: Stratz percentiles via Esports Tales · March–July 2024 omitted (OpenDota-sourced) · hover a point for share and scaled count · y-axis: share of calibrated accounts (%)</div>
+<section id="share-section" class="hidden">
+  <h2>Crusader, Archon, Legend over time</h2>
+  <div class="chart-title">Share of public profiles by snapshot date</div>
+  <div class="legend" id="share-legend"></div>
+  <svg class="line" id="share-chart" role="img" aria-label="Medal share over time"></svg>
+  <div class="caption" id="share-caption"></div>
+</section>
+
+<section id="daily-section" class="hidden">
+  <h2>Day-to-day change</h2>
+  <p class="muted small">Change in share (percentage points) between consecutive daily snapshots. Sparse gaps are not filled in. This series starts when daily saves exist.</p>
+  <div class="chart-title">Daily change in share, Crusader / Archon / Legend</div>
+  <div class="legend" id="daily-legend"></div>
+  <svg class="line" id="daily-chart" role="img" aria-label="Day to day medal share change"></svg>
+  <div class="caption" id="daily-caption"></div>
 </section>
 
 <section id="change-section" class="hidden">
-  <h2>Change by bracket, live (OpenDota public profiles)</h2>
-  <p class="muted small">"Now" is OpenDota's current distribution, fetched when you opened this page. Each change column compares it with the latest saved snapshot at or before that date. Columns with no snapshot that far back are not shown. 2 Aug 2026 is the earliest saved point after the gain change; 25 Jan 2025 is a pre-change reference.</p>
+  <h2>Change by bracket</h2>
+  <p class="muted small">"Now" is OpenDota's current distribution. Each change column uses the latest saved snapshot at or before that date. 2 Aug 2026 is the earliest saved point after the gain change; 25 Jan 2025 is the last saved point before it.</p>
   <div class="controls">
     <button id="change-medal" class="on">8 medals</button>
     <button id="change-star">36 stars</button>
@@ -123,27 +117,6 @@ td .sub{display:block;font-size:12px;color:var(--muted)}
   </div>
   <div class="tbl-wrap"><table id="change-table"></table></div>
   <p class="caption" id="change-caption"></p>
-  <div id="sparklines" class="hidden">
-    <div class="chart-title">Share of public profiles by medal, every saved snapshot</div>
-    <div class="cards" id="spark-cards"></div>
-    <p class="caption" id="spark-caption"></p>
-  </div>
-</section>
-<section id="opendota-today" class="hidden">
-  <h2>OpenDota, public profiles, today</h2>
-  <p class="muted small">A different population from the Stratz tables above: only profiles OpenDota has seen with public match data, inactive accounts included. Shown for a live check, not merged into the Stratz series.</p>
-  <div class="chart-title" id="today-title"></div>
-  <div class="axis-label">Share of public profiles (%)</div>
-  <div class="bars" id="today-bars"></div>
-  <div class="xlabels" id="today-x"></div>
-  <div class="caption" id="today-caption"></div>
-</section>
-<section id="opendota-trend" class="hidden">
-  <h2>OpenDota snapshots over time</h2>
-  <div class="chart-title">Crusader, Archon, Legend share of public profiles by snapshot date (x axis proportional to date)</div>
-  <div class="legend" id="snap-legend"></div>
-  <svg class="line" id="snap" role="img" aria-label="Line chart of OpenDota medal share by snapshot date"></svg>
-  <div class="caption" id="snap-caption"></div>
 </section>
 
 <section id="breakeven">
@@ -159,23 +132,17 @@ td .sub{display:block;font-size:12px;color:var(--muted)}
     <div class="stat"><div class="big" id="d45"></div><div class="muted small">MMR per 100 games at 45%</div></div>
     <div class="stat"><div class="big" id="d50"></div><div class="muted small">MMR per 100 games at 50%</div></div>
   </div>
-  <p class="caption">Break-even = loss ÷ (gain + loss). At the old +25/−25 it was 50%. Reports since June 2026 put wins at +35 to +40 below about 4k MMR, tapering toward +29 around Ancient.</p>
+  <p class="caption">Break-even = loss ÷ (gain + loss). At the old +25/−25 it was 50%.</p>
 </section>
 
 <section id="method">
   <h2>Method and sources</h2>
-  <h3>Where the numbers come from</h3>
-  <p class="small">Stratz collects the seasonal rank of every calibrated account it can see. <a href="https://www.esportstales.com/dota-2/seasonal-rank-distribution-and-mmr-medals">Esports Tales</a> publishes that as a cumulative percentile per medal and star about every two months, on a sample it describes as over 7 million players in Season 6. Those tables are transcribed into <code>data/stratz.json</code>. March–July 2024 are left out because those months were OpenDota-based.</p>
-  <h3>How a medal's share and count are computed</h3>
-  <p class="small">Share of a medal = cumulative percentile at its star 5 minus the cumulative percentile at star 5 of the medal below. Herald starts at 0; Immortal is 100 minus Divine 5. Player counts are share × the population in the field at the top, default 7,000,000. Valve publishes no census, so the percentages are the measurement and the counts are scaled from them. Change the population and every count scales with it; the direction of every change does not.</p>
-  <h3>Why OpenDota is kept separate</h3>
-  <p class="small"><a href="https://api.opendota.com/api/distributions">OpenDota's distribution endpoint</a> counts public profiles it has ever seen, which excludes hidden profiles and keeps inactive ones. It is live and needs no key, so this page fetches it on load and a daily job saves snapshots. It is a different population from Stratz, so it never joins the Stratz series.</p>
-  <h3>What resolution the data has</h3>
-  <p class="small">Stratz tables arrive about every two months; nothing finer exists. OpenDota recomputes daily, and this repo has saved it daily since 1 October 2026. Before that there are only <a href="https://web.archive.org/web/*/https://api.opendota.com/api/distributions">Wayback Machine captures</a> from 5 and 22 August 2024, 25 January 2025, and 2 August 2026. No source has data for June or July 2026, so daily and weekly change can only be shown going forward. The 7-day and 30-day columns switch on once a saved snapshot exists within 3 and 7 days of the target date.</p>
-  <h3>The change being measured</h3>
-  <p class="small">From around 18–19 June 2026, players below roughly 4k MMR began receiving +35 to +40 per win with losses near −25, even at high rank confidence. Valve did not announce it. First reports: <a href="https://www.reddit.com/r/DotA2/comments/1ud01rb/mmr_gainloss_changes/">MMR gain/loss changes</a>, <a href="https://www.reddit.com/r/DotA2/comments/1umk2in/can_we_get_some_confirmation_on_what_is_going_on/">Can we get some confirmation…</a>, <a href="https://www.reddit.com/r/DotA2/comments/1v67mtd/from_cruzader_to_ancient_in_weeks_new_mmr_cheated/">From Crusader to Ancient in weeks</a>, <a href="https://www.reddit.com/r/DotA2/comments/1w3b34e/any_speculations_on_what_valve_want_to_do_with/">Any speculations on the +40/−25 change?</a>.</p>
-  <p class="small"><button id="copy-link">Copy link to this view</button> <span id="copied" class="muted small"></span></p>
-  <p class="caption">Source code and data: <a id="repo-link" href="https://github.com/tejasruikar/dota-mmr-shift">this repository</a>.</p>
+  <p class="small">All numbers are from <a href="https://api.opendota.com/api/distributions">OpenDota's distribution endpoint</a>: public profiles OpenDota has seen. Hidden profiles are missing; inactive ones stay. The page fetches that endpoint once on load. A daily job at 06:00 UTC saves a copy into this repo.</p>
+  <p class="small">The last snapshot before 18 June 2026 is 25 January 2025. Wayback also has 5 and 22 August 2024. The first snapshot after the change is 2 August 2026. Nothing exists for June or July 2026, so the day-to-day chart cannot start until consecutive daily saves (from 30 September 2026).</p>
+  <p class="small">OpenDota's free API allows 60 calls per minute and 3,000 per day with no key. This page uses one call per visit plus one per day from the cron.</p>
+  <p class="small">First reports of the gain change: <a href="https://www.reddit.com/r/DotA2/comments/1ud01rb/mmr_gainloss_changes/">MMR gain/loss changes</a>, <a href="https://www.reddit.com/r/DotA2/comments/1umk2in/can_we_get_some_confirmation_on_what_is_going_on/">confirmation thread</a>, <a href="https://www.reddit.com/r/DotA2/comments/1v67mtd/from_cruzader_to_ancient_in_weeks_new_mmr_cheated/">Crusader to Ancient</a>.</p>
+  <p class="small"><button id="copy-link">Copy link</button> <span id="copied" class="muted small"></span></p>
+  <p class="caption">Source: <a href="https://github.com/tejasruikar/dota-mmr-shift">tejasruikar/dota-mmr-shift</a>.</p>
 </section>
 </main>
 
@@ -184,7 +151,9 @@ const MEDALS = ["herald","guardian","crusader","archon","legend","ancient","divi
 const LABEL = {herald:"Herald",guardian:"Guardian",crusader:"Crusader",archon:"Archon",legend:"Legend",ancient:"Ancient",divine:"Divine",immortal:"Immortal"};
 const FOCUS = ["crusader","archon","legend"];
 const HEX = {herald:"#6b7280",guardian:"#6b7280",crusader:"#c9a227",archon:"#5aa9ff",legend:"#c77dff",ancient:"#6b7280",divine:"#6b7280",immortal:"#6b7280"};
-const BASELINE_MONTH = "2026-06";
+const CHANGE_DATE = "2026-06-18";
+const BEFORE_COLOR = "#6b7280";
+const AFTER_COLOR = "#5aa9ff";
 const PERIODS=[
   {key:"d1",  label:"1 day",            daysAgo:1,  tolerance:1},
   {key:"d7",  label:"7 days",           daysAgo:7,  tolerance:3},
@@ -193,208 +162,12 @@ const PERIODS=[
   {key:"jan", label:"Since 25 Jan 2025",date:"2025-01-25"},
 ];
 
-const state = {data:null, population:7000000, monthIndex:0, view:"medal", opendota:null, snapshots:[], changeView:"medal"};
+const state = {opendota:null, snapshots:[], before:null, changeView:"medal"};
 
 function round2(x){ return Math.round(x*100)/100; }
-function count(sharePct, pop){ return Math.round(sharePct/100*pop); }
 function fmt(n){ return n.toLocaleString("en-US"); }
 function fmtDelta(n){ return (n>0?"+":"") + fmt(n); }
-function monthLabel(ym){ const [y,m]=ym.split("-").map(Number); return new Date(y, m-1, 1).toLocaleString("en-US",{month:"short",year:"numeric"}); }
-function monthDate(ym){ const [y,m]=ym.split("-").map(Number); return new Date(Date.UTC(y, m-1, 1)); }
-
-function medalShares(c){
-  const out={}; let floor=0;
-  for (const m of MEDALS){
-    if (m==="immortal"){ out[m]=round2(100-floor); break; }
-    const top=c[m][c[m].length-1]; out[m]=round2(top-floor); floor=top;
-  }
-  return out;
-}
-function starShares(c){
-  const out=[]; let prev=0;
-  for (const m of MEDALS){
-    if (m==="immortal"){ out.push({medal:m, star:0, label:"Imm", share:round2(100-prev)}); break; }
-    c[m].forEach((v,i)=>{ out.push({medal:m, star:i+1, label:LABEL[m].slice(0,3)+" "+(i+1), share:round2(v-prev)}); prev=v; });
-  }
-  return out;
-}
-function eventFraction(months, iso){
-  const d=new Date(iso+"T00:00:00Z"); const ds=months.map(m=>monthDate(m.month));
-  for (let i=0;i<ds.length-1;i++){
-    if (d>=ds[i] && d<=ds[i+1]){ const f=(d-ds[i])/(ds[i+1]-ds[i]); return (i+f)/(ds.length-1); }
-  }
-  return null;
-}
 async function loadJSON(path){ const r=await fetch(path); if(!r.ok) throw new Error(path+" "+r.status); return r.json(); }
-
-function renderHeadline(){
-  const months=state.data.months;
-  const base=months.find(m=>m.month===BASELINE_MONTH);
-  const latest=months[months.length-1];
-  const bs=medalShares(base.cumulative), ls=medalShares(latest.cumulative);
-  const el=document.getElementById("cards"); el.innerHTML="";
-  for (const m of FOCUS){
-    const b=count(bs[m], state.population), l=count(ls[m], state.population), d=l-b;
-    const card=document.createElement("div"); card.className="card";
-    card.innerHTML=`<h3 style="color:${HEX[m]}">${LABEL[m]}</h3>
-      <div class="big">${fmt(l)}</div>
-      <div class="muted small">${monthLabel(latest.month)} · ${ls[m].toFixed(2)}% of players</div>
-      <div class="delta ${d>=0?"up":"down"}">${fmtDelta(d)} since ${monthLabel(base.month)}</div>
-      <div class="muted small">${fmt(b)} · ${bs[m].toFixed(2)}% in ${monthLabel(base.month)}</div>`;
-    el.appendChild(card);
-  }
-  document.getElementById("headline-note").textContent =
-    `Counts are ${fmt(state.population)} × medal share. Percentages are the measurement; counts are scaled. Source: Stratz percentiles via Esports Tales, ${monthLabel(base.month)} (last table before the change) and ${monthLabel(latest.month)} (latest).`;
-  renderMedalTable(base, latest, bs, ls);
-}
-
-function deltaCell(n, suffix=""){ return `<td class="${n>=0?"up":"down"}">${fmtDelta(n)}${suffix}</td>`; }
-function renderMedalTable(base, latest, bs, ls){
-  const bl=monthLabel(base.month), ll=monthLabel(latest.month);
-  document.getElementById("medal-table-title").textContent=`All medals: ${bl} vs ${ll}`;
-  let h=`<thead><tr><th>Medal</th><th>${bl} players</th><th>${ll} players</th><th>Change</th><th>${bl} share</th><th>${ll} share</th><th>Change</th></tr></thead><tbody>`;
-  for (const m of MEDALS){
-    const b=count(bs[m], state.population), l=count(ls[m], state.population);
-    h+=`<tr class="${FOCUS.includes(m)?"focus":""}"><td style="color:${HEX[m]}">${LABEL[m]}</td><td>${fmt(b)}</td><td>${fmt(l)}</td>${deltaCell(l-b)}<td>${bs[m].toFixed(2)}%</td><td>${ls[m].toFixed(2)}%</td>${deltaCell(round2(ls[m]-bs[m])," pt")}</tr>`;
-  }
-  document.getElementById("medal-table").innerHTML=h+"</tbody>";
-}
-
-function drawBars(barsEl, xEl, items, yMax, showValues){
-  barsEl.dataset.ymax = yMax + "%";
-  if (barsEl.childElementCount !== items.length){
-    barsEl.innerHTML=""; xEl.innerHTML="";
-    items.forEach(()=>{
-      const g=document.createElement("div"); g.className="bar-group";
-      const b=document.createElement("div"); b.className="bar"; b.style.height="0%";
-      const v=document.createElement("span"); v.className="val"; b.appendChild(v);
-      g.appendChild(b); barsEl.appendChild(g);
-      xEl.appendChild(document.createElement("div"));
-    });
-  }
-  [...barsEl.children].forEach((g,i)=>{
-    const it=items[i], b=g.firstElementChild;
-    b.style.height = Math.min(100, it.share/yMax*100) + "%";
-    b.style.background = it.color;
-    b.title = `${it.label}: ${it.share.toFixed(2)}%`;
-    b.firstElementChild.textContent = showValues ? it.share.toFixed(1)+"%" : "";
-    xEl.children[i].textContent = it.label;
-  });
-}
-
-function barItems(){
-  const c=state.data.months[state.monthIndex].cumulative;
-  if (state.view==="medal"){ const s=medalShares(c); return MEDALS.map(m=>({label:LABEL[m], share:s[m], color:HEX[m]})); }
-  return starShares(c).map(s=>({label:s.label, share:s.share, color:HEX[s.medal]}));
-}
-
-function renderBars(){
-  const months=state.data.months, m=months[state.monthIndex];
-  const yMax = state.view==="medal" ? 35 : 8;
-  drawBars(document.getElementById("bars"), document.getElementById("bars-x"), barItems(), yMax, state.view==="medal");
-  document.getElementById("month-label").textContent = monthLabel(m.month);
-  document.getElementById("bars-title").textContent =
-    `Share of ranked players by ${state.view==="medal" ? "medal" : "medal and star"} — ${monthLabel(m.month)}`;
-  document.getElementById("bars-caption").textContent =
-    `Source: Stratz percentiles via Esports Tales · ${monthLabel(months[0].month)} to ${monthLabel(months[months.length-1].month)} · y-axis 0 to ${yMax}%`;
-}
-
-let playTimer=null;
-function startPlay(){
-  const s=document.getElementById("month-slider");
-  if (state.monthIndex >= state.data.months.length-1) state.monthIndex=0;
-  s.value=state.monthIndex; renderBars();
-  document.getElementById("play").textContent="Pause";
-  playTimer=setInterval(()=>{
-    if (state.monthIndex >= state.data.months.length-1){ stopPlay(); writeURL(); return; }
-    state.monthIndex++; s.value=state.monthIndex; renderBars();
-  }, 700);
-}
-function stopPlay(){ if (playTimer){ clearInterval(playTimer); playTimer=null; } document.getElementById("play").textContent="Play"; }
-function setView(v){
-  state.view=v;
-  document.getElementById("view-medal").classList.toggle("on", v==="medal");
-  document.getElementById("view-star").classList.toggle("on", v==="star");
-  document.getElementById("bars").innerHTML="";
-  renderBars();
-}
-function writeURL(){
-  const u=new URL(location.href); u.searchParams.set("month", state.data.months[state.monthIndex].month);
-  history.replaceState(null, "", u);
-}
-function setupTimeline(){
-  const months=state.data.months, s=document.getElementById("month-slider");
-  s.max=months.length-1;
-  const q=new URLSearchParams(location.search).get("month");
-  const qi=months.findIndex(m=>m.month===q); if (qi>=0) state.monthIndex=qi;
-  s.value=state.monthIndex;
-  s.addEventListener("input", ()=>{ stopPlay(); state.monthIndex=Number(s.value); renderBars(); writeURL(); });
-  document.getElementById("play").addEventListener("click", ()=> playTimer ? stopPlay() : startPlay());
-  document.getElementById("view-medal").addEventListener("click", ()=>setView("medal"));
-  document.getElementById("view-star").addEventListener("click", ()=>setView("star"));
-  const ev=state.data.events[0], f=eventFraction(months, ev.date);
-  if (f!==null){
-    document.getElementById("event-marker").style.left=(f*100)+"%";
-    document.getElementById("event-label").textContent=`${ev.date}: ${ev.label}`;
-  }
-  renderBars();
-}
-
-function lineChart(svg, {categories, series, yMin, yMax, yLabel, markerX=null, markerLabel="", pointTitle, xFractions=null}){
-  const W=800, H=320, L=52, R=16, T=20, B=52;
-  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-  const frac=i=> xFractions ? xFractions[i] : (categories.length===1 ? 0.5 : i/(categories.length-1));
-  const x=i=> L + (W-L-R) * frac(i);
-  const y=v=> T + (H-T-B) * (1 - (v-yMin)/(yMax-yMin));
-  const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
-  let s="";
-  const ticks=5;
-  for (let k=0;k<=ticks;k++){
-    const v=yMin+(yMax-yMin)*k/ticks;
-    s+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="#2a2f3a"/>`;
-    s+=`<text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="#9aa3b2">${v.toFixed(1)}%</text>`;
-  }
-  let lastLabelX=-Infinity;
-  categories.forEach((c,i)=>{
-    const last=i===categories.length-1, xi=x(i);
-    if (last || xi-lastLabelX>=80){
-      if (last && xi-lastLabelX<80) return;
-      s+=`<text x="${xi}" y="${H-B+18}" text-anchor="middle" font-size="11" fill="#9aa3b2">${esc(c)}</text>`;
-      lastLabelX=xi;
-    }
-  });
-  s+=`<text x="${L}" y="${H-6}" font-size="11" fill="#9aa3b2">${esc(yLabel)}</text>`;
-  if (markerX!==null){
-    const mx=L+(W-L-R)*markerX;
-    s+=`<line x1="${mx}" x2="${mx}" y1="${T}" y2="${H-B}" stroke="#e5534b" stroke-dasharray="4 3"/>`;
-    s+=`<text x="${mx+4}" y="${T+12}" font-size="11" fill="#e5534b">${esc(markerLabel)}</text>`;
-  }
-  for (const ser of series){
-    const pts=ser.values.map((v,i)=>`${x(i)},${y(v)}`).join(" ");
-    s+=`<polyline points="${pts}" fill="none" stroke="${ser.color}" stroke-width="2"/>`;
-    ser.values.forEach((v,i)=>{
-      s+=`<circle cx="${x(i)}" cy="${y(v)}" r="3.5" fill="${ser.color}"><title>${esc(pointTitle(ser,i,v))}</title></circle>`;
-    });
-  }
-  svg.innerHTML=s;
-}
-
-function renderTrend(){
-  const months=state.data.months;
-  const cats=months.map(m=>monthLabel(m.month));
-  const shares=months.map(m=>medalShares(m.cumulative));
-  const series=FOCUS.map(m=>({name:LABEL[m], key:m, color:HEX[m], values:shares.map(s=>s[m])}));
-  const ev=state.data.events[0];
-  lineChart(document.getElementById("trend"), {
-    categories:cats, series, yMin:10, yMax:32,
-    yLabel:"Share of calibrated accounts (%)",
-    markerX:eventFraction(months, ev.date), markerLabel:"18 Jun 2026 gain change",
-    pointTitle:(ser,i,v)=>`${ser.name} · ${cats[i]} · ${v.toFixed(2)}% · ${fmt(count(v, state.population))} players`
-  });
-  document.getElementById("trend-legend").innerHTML =
-    series.map(s=>`<span style="color:${s.color}">${s.name}</span>`).join("");
-}
-
 function isoDaysAgo(n, from){ const d=new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), from.getUTCDate())); d.setUTCDate(d.getUTCDate()-n); return d.toISOString().slice(0,10); }
 function daysBetween(a, b){ return Math.round((new Date(b+"T00:00:00Z")-new Date(a+"T00:00:00Z"))/864e5); }
 function snapshotAtOrBefore(snaps, iso){ let best=null; for (const e of snaps){ if (e.date<=iso) best=e; else break; } return best; }
@@ -425,6 +198,193 @@ function rowsFor(view, bins, total){
   if (view==="medal"){ const c=opendotaMedalCounts(bins); return MEDALS.map(m=>({key:m, medal:m, label:LABEL[m], count:c[m], share:c[m]/total*100})); }
   return opendotaStarCounts(bins).map(r=>({...r, share:r.count/total*100}));
 }
+function dateFractions(dates){
+  const t=dates.map(d=>new Date(d+"T00:00:00Z").getTime()), a=t[0], b=t[t.length-1];
+  return t.map(v=> b===a ? 0.5 : (v-a)/(b-a));
+}
+function eventFractionOnDates(dates, iso){
+  const d=new Date(iso+"T00:00:00Z").getTime();
+  const t=dates.map(x=>new Date(x+"T00:00:00Z").getTime());
+  const a=t[0], b=t[t.length-1];
+  if (b===a) return null;
+  if (d<=a) return 0;
+  if (d>=b) return 1;
+  return (d-a)/(b-a);
+}
+function seriesPoints(){
+  const snaps=state.snapshots.map(s=>({...s}));
+  const now=state.opendota;
+  if (now){
+    const entry={date:now.date, bins:now.bins, total:now.total};
+    const i=snaps.findIndex(s=>s.date===now.date);
+    if (i>=0) snaps[i]=entry; else snaps.push(entry);
+  }
+  return snaps.sort((a,b)=>a.date.localeCompare(b.date));
+}
+
+function drawGroupedBars(barsEl, xEl, groups, yMax){
+  barsEl.dataset.ymax = yMax + "%";
+  barsEl.innerHTML=""; xEl.innerHTML="";
+  groups.forEach(g=>{
+    const wrap=document.createElement("div"); wrap.className="bar-group";
+    g.bars.forEach(it=>{
+      const b=document.createElement("div"); b.className="bar";
+      b.style.height = Math.min(100, it.share/yMax*100) + "%";
+      b.style.background = it.color;
+      b.title = `${g.label} ${it.name}: ${it.share.toFixed(2)}%`;
+      const v=document.createElement("span"); v.className="val";
+      v.textContent = it.share.toFixed(1)+"%";
+      b.appendChild(v); wrap.appendChild(b);
+    });
+    barsEl.appendChild(wrap);
+    const lab=document.createElement("div"); lab.textContent=g.label; xEl.appendChild(lab);
+  });
+}
+
+function lineChart(svg, {categories, series, yMin, yMax, yLabel, ySuffix="%", markerX=null, markerLabel="", pointTitle, xFractions=null, zeroLine=false}){
+  const W=800, H=320, L=56, R=16, T=20, B=52;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const frac=i=> xFractions ? xFractions[i] : (categories.length===1 ? 0.5 : i/(categories.length-1));
+  const x=i=> L + (W-L-R) * frac(i);
+  const span=yMax-yMin || 1;
+  const y=v=> T + (H-T-B) * (1 - (v-yMin)/span);
+  const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+  const fmtY=v=> (Math.abs(span)<2 ? v.toFixed(2) : v.toFixed(1)) + ySuffix;
+  let s="";
+  const ticks=5;
+  for (let k=0;k<=ticks;k++){
+    const v=yMin+span*k/ticks;
+    s+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="#2a2f3a"/>`;
+    s+=`<text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="#9aa3b2">${fmtY(v)}</text>`;
+  }
+  if (zeroLine && yMin<0 && yMax>0){
+    s+=`<line x1="${L}" x2="${W-R}" y1="${y(0)}" y2="${y(0)}" stroke="#9aa3b2" stroke-dasharray="4 3"/>`;
+  }
+  const labelIdx=[];
+  categories.forEach((_,i)=>{
+    const xi=x(i);
+    if (i===0 || i===categories.length-1) labelIdx.push(i);
+    else if (xi-x(labelIdx[labelIdx.length-1])>=80) labelIdx.push(i);
+  });
+  while (labelIdx.length>=2 && x(labelIdx[labelIdx.length-1])-x(labelIdx[labelIdx.length-2])<80){
+    labelIdx.splice(labelIdx.length-2, 1);
+  }
+  for (const i of labelIdx){
+    s+=`<text x="${x(i)}" y="${H-B+18}" text-anchor="middle" font-size="11" fill="#9aa3b2">${esc(categories[i])}</text>`;
+  }
+  s+=`<text x="${L}" y="${H-6}" font-size="11" fill="#9aa3b2">${esc(yLabel)}</text>`;
+  if (markerX!==null){
+    const mx=L+(W-L-R)*markerX;
+    s+=`<line x1="${mx}" x2="${mx}" y1="${T}" y2="${H-B}" stroke="#e5534b" stroke-dasharray="4 3"/>`;
+    s+=`<text x="${mx+4}" y="${T+12}" font-size="11" fill="#e5534b">${esc(markerLabel)}</text>`;
+  }
+  for (const ser of series){
+    const pts=ser.values.map((v,i)=>`${x(i)},${y(v)}`).join(" ");
+    s+=`<polyline points="${pts}" fill="none" stroke="${ser.color}" stroke-width="2"/>`;
+    ser.values.forEach((v,i)=>{
+      s+=`<circle cx="${x(i)}" cy="${y(v)}" r="3.5" fill="${ser.color}"><title>${esc(pointTitle(ser,i,v))}</title></circle>`;
+    });
+  }
+  svg.innerHTML=s;
+}
+
+function renderHeadline(){
+  const now=state.opendota, before=state.before;
+  const nc=opendotaMedalCounts(now.bins), bc=opendotaMedalCounts(before.bins);
+  const ns=opendotaMedalShares(now.bins, now.total), bs=opendotaMedalShares(before.bins, before.total);
+  const el=document.getElementById("cards"); el.innerHTML="";
+  for (const m of FOCUS){
+    const d=nc[m]-bc[m];
+    const card=document.createElement("div"); card.className="card";
+    card.innerHTML=`<h3 style="color:${HEX[m]}">${LABEL[m]}</h3>
+      <div class="big">${fmt(nc[m])}</div>
+      <div class="muted small">${now.date} · ${ns[m].toFixed(2)}% of profiles</div>
+      <div class="delta ${d>=0?"up":"down"}">${fmtDelta(d)} since ${before.date}</div>
+      <div class="muted small">${fmt(bc[m])} · ${bs[m].toFixed(2)}%</div>`;
+    el.appendChild(card);
+  }
+  document.getElementById("headline-note").textContent =
+    `${fmt(now.total)} public profiles today${now.live?" (live)":""}. Before snapshot: ${before.date} (${fmt(before.total)} profiles). Source: api.opendota.com/api/distributions.`;
+  document.getElementById("medal-table-title").textContent = `All medals: ${before.date} vs ${now.date}`;
+  let h=`<thead><tr><th>Medal</th><th>${before.date}</th><th>${now.date}</th><th>Change</th><th>Share then</th><th>Share now</th><th>Change</th></tr></thead><tbody>`;
+  for (const m of MEDALS){
+    h+=`<tr class="${FOCUS.includes(m)?"focus":""}"><td style="color:${HEX[m]}">${LABEL[m]}</td><td>${fmt(bc[m])}</td><td>${fmt(nc[m])}</td><td class="${nc[m]-bc[m]>=0?"up":"down"}">${fmtDelta(nc[m]-bc[m])}</td><td>${bs[m].toFixed(2)}%</td><td>${ns[m].toFixed(2)}%</td><td class="${ns[m]-bs[m]>=0?"up":"down"}">${fmtDelta(round2(ns[m]-bs[m]))} pt</td></tr>`;
+  }
+  document.getElementById("medal-table").innerHTML=h+"</tbody>";
+  document.getElementById("headline").classList.remove("hidden");
+}
+
+function renderOverlay(){
+  const now=state.opendota, before=state.before;
+  const ns=opendotaMedalShares(now.bins, now.total), bs=opendotaMedalShares(before.bins, before.total);
+  const groups=MEDALS.map(m=>({
+    label: LABEL[m],
+    bars: [
+      {name: before.date, share: bs[m], color: BEFORE_COLOR},
+      {name: now.date, share: ns[m], color: HEX[m]==="#6b7280" ? AFTER_COLOR : HEX[m]},
+    ],
+  }));
+  const yMax=Math.ceil(Math.max(...groups.flatMap(g=>g.bars.map(b=>b.share)))+1);
+  drawGroupedBars(document.getElementById("overlay-bars"), document.getElementById("overlay-x"), groups, yMax);
+  document.getElementById("legend-before").textContent = before.date + " (before +40)";
+  document.getElementById("legend-after").textContent = now.date + " (after)";
+  document.getElementById("overlay-title").textContent = `Share of public profiles by medal — ${before.date} vs ${now.date}`;
+  document.getElementById("overlay-caption").textContent =
+    `Source: api.opendota.com/api/distributions · before is the last saved snapshot dated before 18 June 2026 · after is ${now.live?"fetched on page load":"the latest saved snapshot"} · y-axis 0 to ${yMax}%`;
+  document.getElementById("overlay-section").classList.remove("hidden");
+}
+
+function renderShareOverTime(){
+  const pts=seriesPoints();
+  if (pts.length<2) return;
+  const cats=pts.map(e=>e.date);
+  const shares=pts.map(e=>opendotaMedalShares(e.bins, e.total));
+  const series=FOCUS.map(m=>({name:LABEL[m], color:HEX[m], values:shares.map(s=>s[m])}));
+  const all=series.flatMap(s=>s.values);
+  lineChart(document.getElementById("share-chart"), {
+    categories:cats, series,
+    yMin:Math.max(0, Math.floor(Math.min(...all))-1),
+    yMax:Math.ceil(Math.max(...all))+1,
+    yLabel:"Share of public profiles (%)",
+    xFractions:dateFractions(cats),
+    markerX:eventFractionOnDates(cats, CHANGE_DATE),
+    markerLabel:"18 Jun 2026 +40/−25",
+    pointTitle:(ser,i,v)=>`${ser.name} · ${cats[i]} · ${v.toFixed(2)}% · ${fmt(Math.round(v/100*pts[i].total))} profiles`,
+  });
+  document.getElementById("share-legend").innerHTML=series.map(s=>`<span style="color:${s.color}">${s.name}</span>`).join("");
+  document.getElementById("share-caption").textContent=
+    `Source: saved OpenDota snapshots${state.opendota?.live?" plus live fetch":""} · ${cats[0]} to ${cats[cats.length-1]} · ${pts.length} points · x proportional to date · no snapshots exist for June–July 2026`;
+  document.getElementById("share-section").classList.remove("hidden");
+}
+
+function renderDailyChange(){
+  const pts=seriesPoints();
+  const dates=[], deltas={};
+  for (const m of FOCUS) deltas[m]=[];
+  for (let i=1;i<pts.length;i++){
+    if (daysBetween(pts[i-1].date, pts[i].date)!==1) continue;
+    const a=opendotaMedalShares(pts[i-1].bins, pts[i-1].total);
+    const b=opendotaMedalShares(pts[i].bins, pts[i].total);
+    dates.push(pts[i].date);
+    for (const m of FOCUS) deltas[m].push(round2(b[m]-a[m]));
+  }
+  if (!dates.length) return;
+  const series=FOCUS.map(m=>({name:LABEL[m], color:HEX[m], values:deltas[m]}));
+  const all=series.flatMap(s=>s.values);
+  const pad=0.05;
+  let yMin=Math.min(0, ...all)-pad, yMax=Math.max(0, ...all)+pad;
+  lineChart(document.getElementById("daily-chart"), {
+    categories:dates, series, yMin, yMax, ySuffix:" pt",
+    yLabel:"Daily change in share (percentage points)",
+    zeroLine:true,
+    pointTitle:(ser,i,v)=>`${ser.name} · ${dates[i]} · ${v>=0?"+":""}${v.toFixed(2)} pt vs previous day`,
+  });
+  document.getElementById("daily-legend").innerHTML=series.map(s=>`<span style="color:${s.color}">${s.name}</span>`).join("");
+  document.getElementById("daily-caption").textContent=
+    `Source: consecutive daily OpenDota snapshots · ${dates[0]} to ${dates[dates.length-1]} · ${dates.length} day${dates.length===1?"":"s"} · y is change in percentage points of all public profiles`;
+  document.getElementById("daily-section").classList.remove("hidden");
+}
+
 function renderChangeTable(){
   const now=state.opendota, snaps=state.snapshots;
   const periods=PERIODS.map(p=>({...p, base:periodBaseline(p, snaps, now.date)})).filter(p=>p.base);
@@ -442,9 +402,9 @@ function renderChangeTable(){
     h+=`</tr>`;
   }
   document.getElementById("change-table").innerHTML=h+"</tbody>";
-  document.getElementById("change-now").textContent=`${fmt(now.total)} public profiles · ${now.live ? "live from OpenDota" : "latest saved snapshot (live fetch failed)"}`;
+  document.getElementById("change-now").textContent=`${fmt(now.total)} public profiles · ${now.live ? "live from OpenDota" : "latest saved snapshot"}`;
   document.getElementById("change-caption").textContent=
-    `Source: api.opendota.com/api/distributions (now) and ${snaps.length} saved snapshots in this repo, ${snaps[0].date} to ${snaps[snaps.length-1].date}. Changes are in profiles and in percentage points of all public profiles. 7- and 30-day columns appear once a snapshot within ${PERIODS[1].tolerance} and ${PERIODS[2].tolerance} days of the target date exists.`;
+    `Source: api.opendota.com/api/distributions and ${snaps.length} saved snapshots, ${snaps[0].date} to ${snaps[snaps.length-1].date}. 7- and 30-day columns appear once a snapshot within 3 and 7 days of the target exists.`;
   document.getElementById("change-section").classList.remove("hidden");
 }
 function setChangeView(v){
@@ -452,75 +412,6 @@ function setChangeView(v){
   document.getElementById("change-medal").classList.toggle("on", v==="medal");
   document.getElementById("change-star").classList.toggle("on", v==="star");
   renderChangeTable();
-}
-function dateFractions(dates){
-  const t=dates.map(d=>new Date(d+"T00:00:00Z").getTime()), a=t[0], b=t[t.length-1];
-  return t.map(v=> b===a ? 0.5 : (v-a)/(b-a));
-}
-function sparkline(values, fr, color){
-  const W=200, H=48, P=4, mn=Math.min(...values), mx=Math.max(...values);
-  const y=v=> P+(H-2*P)*(1-(mx===mn ? 0.5 : (v-mn)/(mx-mn)));
-  const pts=values.map((v,i)=>`${P+(W-2*P)*fr[i]},${y(v)}`).join(" ");
-  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:48px;display:block" role="img"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2"/></svg>`;
-}
-function renderSparklines(){
-  const snaps=state.snapshots; if (snaps.length<7) return;
-  const fr=dateFractions(snaps.map(s=>s.date));
-  const shares=snaps.map(s=>opendotaMedalShares(s.bins, s.total));
-  document.getElementById("spark-cards").innerHTML=MEDALS.map(m=>{
-    const vals=shares.map(s=>s[m]), first=vals[0], last=vals[vals.length-1];
-    return `<div class="card"><h3 style="color:${HEX[m]}">${LABEL[m]}</h3>${sparkline(vals, fr, HEX[m])}<div class="small muted">${first.toFixed(2)}% → ${last.toFixed(2)}% <span class="${last>=first?"up":"down"}">(${fmtDelta(round2(last-first))} pt)</span></div></div>`;
-  }).join("");
-  document.getElementById("spark-caption").textContent=
-    `Source: saved OpenDota snapshots, ${snaps[0].date} to ${snaps[snaps.length-1].date} (${snaps.length} points). x proportional to date; y auto-scaled per medal from first to last value shown below each line.`;
-  document.getElementById("sparklines").classList.remove("hidden");
-}
-function renderTodayBar(){
-  const {bins,total}=state.opendota, s=opendotaMedalShares(bins,total);
-  const items=MEDALS.map(m=>({label:LABEL[m], share:s[m], color:HEX[m]}));
-  drawBars(document.getElementById("today-bars"), document.getElementById("today-x"), items, 35, true);
-  const today=new Date().toLocaleDateString("en-US",{year:"numeric",month:"short",day:"numeric"});
-  document.getElementById("today-title").textContent=`Share of public profiles by medal — ${today}`;
-  document.getElementById("today-caption").textContent=
-    `Source: api.opendota.com/api/distributions, fetched on page load · ${fmt(total)} public profiles · Crusader ${fmt(Math.round(s.crusader/100*total))}, Archon ${fmt(Math.round(s.archon/100*total))}, Legend ${fmt(Math.round(s.legend/100*total))}`;
-  document.getElementById("opendota-today").classList.remove("hidden");
-}
-function renderSnapshotTrend(){
-  const snaps=state.snapshots, cats=snaps.map(e=>e.date);
-  const shares=snaps.map(e=>opendotaMedalShares(e.bins, e.total));
-  const series=FOCUS.map(m=>({name:LABEL[m], key:m, color:HEX[m], values:shares.map(s=>s[m])}));
-  const all=series.flatMap(s=>s.values);
-  const yMin=Math.max(0, Math.floor(Math.min(...all))-1), yMax=Math.ceil(Math.max(...all))+1;
-  lineChart(document.getElementById("snap"), {
-    categories:cats, series, yMin, yMax, yLabel:"Share of public profiles (%)", xFractions:dateFractions(cats),
-    pointTitle:(ser,i,v)=>`${ser.name} · ${cats[i]} · ${v.toFixed(2)}% · ${fmt(Math.round(v/100*snaps[i].total))} profiles`
-  });
-  document.getElementById("snap-legend").innerHTML=series.map(s=>`<span style="color:${s.color}">${s.name}</span>`).join("");
-  document.getElementById("snap-caption").textContent=
-    `Source: saved snapshots of api.opendota.com/api/distributions in this repo · ${cats[0]} to ${cats[cats.length-1]} · ${snaps.length} snapshots · no data exists for June–July 2026`;
-  document.getElementById("opendota-trend").classList.remove("hidden");
-}
-async function renderOpenDota(){
-  try { const snaps=await loadJSON("data/opendota.json"); if (Array.isArray(snaps)) state.snapshots=snaps; }
-  catch (e) { console.warn("OpenDota snapshots skipped:", e.message); }
-  let live=null;
-  try {
-    const r=await fetch("https://api.opendota.com/api/distributions");
-    if (!r.ok) throw new Error("HTTP "+r.status);
-    const j=await r.json();
-    const bins={}; for (const row of j.ranks.rows) bins[String(row.bin)]=row.count;
-    live={bins, total:j.ranks.sum.count, date:new Date().toISOString().slice(0,10), live:true};
-  } catch (e) { console.warn("OpenDota live fetch skipped:", e.message); }
-  const snaps=state.snapshots;
-  if (live) state.opendota=live;
-  else if (snaps.length){ const l=snaps[snaps.length-1]; state.opendota={bins:l.bins, total:l.total, date:l.date, live:false}; }
-  if (state.opendota && snaps.length){
-    document.getElementById("change-medal").addEventListener("click", ()=>setChangeView("medal"));
-    document.getElementById("change-star").addEventListener("click", ()=>setChangeView("star"));
-    renderChangeTable(); renderSparklines();
-  }
-  if (live) renderTodayBar();
-  if (snaps.length>=2) renderSnapshotTrend();
 }
 
 function breakEven(gain, loss){ return loss/(gain+loss)*100; }
@@ -544,25 +435,48 @@ function setupBreakEven(){
   renderBreakEven();
 }
 
-function renderAll(){
-  renderHeadline();
-  renderTrend();
+function paint(){
+  if (!state.opendota) return;
+  if (state.before){ renderHeadline(); renderOverlay(); }
+  renderShareOverTime();
+  renderDailyChange();
+  if (state.snapshots.length) renderChangeTable();
+}
+
+async function fetchLive(timeoutMs=10000){
+  const ctrl=new AbortController();
+  const t=setTimeout(()=>ctrl.abort(), timeoutMs);
+  try {
+    const r=await fetch("https://api.opendota.com/api/distributions", {signal:ctrl.signal});
+    if (!r.ok) throw new Error("HTTP "+r.status);
+    const j=await r.json();
+    const bins={}; for (const row of j.ranks.rows) bins[String(row.bin)]=row.count;
+    return {bins, total:j.ranks.sum.count, date:new Date().toISOString().slice(0,10), live:true};
+  } finally {
+    clearTimeout(t);
+  }
 }
 
 async function init(){
-  state.data = await loadJSON("data/stratz.json");
-  state.population = state.data.default_population;
-  state.monthIndex = state.data.months.length-1;
-  document.getElementById("population").value = state.population;
-  renderHeadline();
-  setupTimeline();
-  renderTrend();
-  renderOpenDota();
+  try { const snaps=await loadJSON("data/opendota.json"); if (Array.isArray(snaps)) state.snapshots=snaps; }
+  catch (e) { console.warn("snapshots skipped:", e.message); }
+  state.before=([...state.snapshots].reverse().find(s=>s.date<CHANGE_DATE)) || null;
+  if (state.snapshots.length){
+    const l=state.snapshots[state.snapshots.length-1];
+    state.opendota={bins:l.bins, total:l.total, date:l.date, live:false};
+    document.getElementById("change-medal").addEventListener("click", ()=>setChangeView("medal"));
+    document.getElementById("change-star").addEventListener("click", ()=>setChangeView("star"));
+    paint();
+  }
+  try {
+    state.opendota=await fetchLive();
+    paint();
+  } catch (e) {
+    console.warn("live fetch skipped:", e.message);
+  }
+  if (!state.opendota){ document.getElementById("error").textContent="Could not load OpenDota data."; document.getElementById("error").classList.remove("hidden"); return; }
   setupBreakEven();
 }
-document.getElementById("population").addEventListener("input", e=>{
-  const v=Number(e.target.value); if (v>0){ state.population=v; renderAll(); }
-});
 init().catch(err=>{ const e=document.getElementById("error"); e.textContent="Could not load data: "+err.message; e.classList.remove("hidden"); });
 </script>
 </body>
