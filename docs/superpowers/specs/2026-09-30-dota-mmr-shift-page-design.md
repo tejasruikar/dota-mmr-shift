@@ -41,7 +41,18 @@ profiles OpenDota has seen. This is a different population (hidden profiles miss
 inactive accounts retained), so it is never spliced into the Stratz series. It is
 shown as its own thing: a live "today" bar, and a trend once snapshots accumulate.
 
-Snapshots are appended weekly to `data/opendota.json` by a GitHub Actions cron.
+OpenDota recomputes the distribution daily (confirmed: every bin changed between
+2026-09-30 and 2026-10-01). Snapshots are appended daily to `data/opendota.json` by a
+GitHub Actions cron.
+
+The file is seeded with the snapshots that exist before the cron starts: Wayback
+Machine captures of the endpoint on 2024-08-05, 2024-08-22, 2025-01-25, and
+2026-08-02, plus direct captures on 2026-09-30 and 2026-10-01. The 2023-02-01 capture
+is excluded (pre-Glicko matchmaking). There is no OpenDota data between June and
+August 2026; that gap cannot be reconstructed from any source.
+
+Resolution, stated on the page: Stratz is bi-monthly; OpenDota is daily from October
+2026 onward with sparse points before that.
 
 ## Repository layout
 
@@ -111,7 +122,9 @@ derived is stored.
 `bins` holds every bin the API returns (36 keys in practice; the example is
 abbreviated). Keys are OpenDota `rank_tier` values (tens digit = medal 1–8, ones
 digit = star 1–5; `80` is Immortal). The script stores the raw bins; the page
-derives medal totals. One entry per calendar date; a rerun on the same date is a no-op.
+derives medal totals. One entry per calendar date, sorted ascending; a rerun on the
+same date is a no-op. Seeded entries carry an extra `"source": "wayback"` or
+`"source": "manual"` field; cron entries carry none.
 
 ## Page
 
@@ -123,7 +136,24 @@ time range.
    bracket in June 2026 (last table before the change) and in the latest month, the
    difference, and the share percentages. A population input (default 7,000,000)
    sits beside them; editing it recomputes every count on the page. The latest month
-   is whichever entry in `stratz.json` is last.
+   is whichever entry in `stratz.json` is last. Below the cards, a table of all
+   eight medals with the same columns (June share and count, latest share and count,
+   change in count and in share points), Crusader/Archon/Legend rows highlighted.
+
+1b. **Change by bracket (OpenDota, live).** On load the page fetches
+   `/api/distributions` and treats it as "now". A table of all eight medals, with a
+   toggle to 36 stars, shows: current count and share; then change in count and in
+   share points over 1 day, 7 days, 30 days, since 2026-08-02 (earliest post-change
+   OpenDota point), and since 2025-01-25 (pre-change).    Each period column uses the
+   latest committed snapshot dated at or before `today − N days` (or the named date).
+   For the day-based periods the snapshot must also be within a tolerance of the
+   target (1 day: 1; 7 days: 3; 30 days: 7) so a column is never labeled "7 days"
+   while actually comparing against a months-old point. A column with no qualifying
+   snapshot is omitted entirely. Column headers show the actual baseline date. Positive deltas green,
+   negative red. If the live fetch fails, the latest committed snapshot is "now" and
+   the caption says so. If there is no snapshot at all, the section is omitted.
+   Below the table, once seven or more snapshots exist, one small sparkline per
+   medal of share over snapshot dates; hidden until then.
 
 2. **Timeline.** A range slider over the published months plus a play button that
    steps through them at about one month per 700 ms. Below it, a bar chart of medal
@@ -136,21 +166,23 @@ time range.
    series, with the June 2026 event marked. Hovering a point shows the month, share,
    and scaled count.
 
-4. **OpenDota.** On load the page fetches `/api/distributions`. If it succeeds, a bar
-   of medal share for "public profiles, today" appears with the total profile count
-   and a one-line note that this is a different population. If `data/opendota.json`
-   has two or more snapshots, a second line chart shows Crusader, Archon, Legend
-   share by snapshot date. If the fetch fails, the today bar is omitted. If there are
-   fewer than two snapshots, the trend is omitted. Nothing renders empty.
+4. **OpenDota charts.** Using the same live fetch as 1b: a bar of medal share for
+   "public profiles, today" with the total profile count and a one-line note that
+   this is a different population. If `data/opendota.json` has two or more
+   snapshots, a line chart shows Crusader, Archon, Legend share by snapshot date
+   (x positions proportional to date, since the seed points are years apart and the
+   cron points are a day apart). If the fetch fails, the today bar is omitted. If
+   there are fewer than two snapshots, the trend is omitted. Nothing renders empty.
 
 5. **Break-even.** Two sliders, win gain (20–45) and loss (20–30), defaults 35 and 25.
    Shows the win rate that holds MMR (`loss / (gain + loss)`) and the MMR drift over
    100 games at 45% and 50% win rate.
 
 6. **Method and sources.** Short paragraphs: how medal share is computed, why counts
-   are scaled, why OpenDota is kept separate, the excluded 2024 months, links to
-   Esports Tales, OpenDota, and the Reddit threads where the change was first
-   reported.
+   are scaled, why OpenDota is kept separate, the excluded 2024 months, the
+   resolution limits (Stratz bi-monthly; OpenDota daily from October 2026, sparse
+   before; June–August 2026 gap), links to Esports Tales, OpenDota, the Wayback
+   captures, and the Reddit threads where the change was first reported.
 
 Sharing: Open Graph and Twitter card meta tags (title, description, and a static
 `og-image.png` committed to the repo); a copy-link button that copies the current
@@ -166,13 +198,14 @@ width; charts are SVG with `viewBox` so they scale.
 - `fetch()` GETs `https://api.opendota.com/api/distributions` with a 30 s timeout and
   a `User-Agent` header. Returns the parsed `ranks.rows` and `ranks.sum.count`.
 - `to_entry(rows, total, date)` builds one `data/opendota.json` entry.
-- `append(entries, entry)` returns a new list with `entry` added unless an entry with
-  the same `date` exists, in which case the list is returned unchanged.
+- `append(entries, entry)` returns a new list with `entry` added and sorted by `date`,
+  unless an entry with the same `date` exists, in which case the list is returned
+  unchanged.
 - `main()` reads `data/opendota.json`, fetches, appends for today's UTC date, writes
   back with two-space indentation, exits 0. Any network or parse failure exits 1
   with the error on stderr; the file is not touched.
 
-`.github/workflows/snapshot.yml`: `schedule: cron "0 6 * * 1"` (Mondays 06:00 UTC)
+`.github/workflows/snapshot.yml`: `schedule: cron "0 6 * * *"` (daily 06:00 UTC)
 plus `workflow_dispatch`. Steps: checkout, setup Python 3.12, run the script, commit
 and push only if `git diff --quiet -- data/opendota.json` fails. Uses the default
 `GITHUB_TOKEN` with `contents: write`.
@@ -181,10 +214,16 @@ Hosting: GitHub Pages, source `main`, folder `/`. Each push redeploys.
 
 ## Testing
 
-- `tests/test_snapshot.py` (pytest or `unittest`, stdlib): `to_entry` produces the
-  expected shape from a captured sample response; `append` adds a new date; `append`
-  is a no-op for a duplicate date; `main` leaves the file untouched when `fetch`
-  raises (monkeypatched).
+- `tests/test_snapshot.py` (`unittest`, stdlib): `to_entry` produces the expected
+  shape from a captured sample response; `append` adds a new date and keeps the list
+  sorted; `append` is a no-op for a duplicate date; `main` leaves the file untouched
+  when `fetch` raises (monkeypatched).
+- `tests/test_data.py` also checks `data/opendota.json`: sorted unique dates, every
+  entry has 36 bins summing to `total`, and the seed dates are present.
+- Delta logic in the page is pure functions (`snapshotAtOrBefore(snaps, isoDate)`,
+  `medalCounts(bins)`) checked in the browser against hand-computed values from the
+  2026-08-02 and 2026-09-30 seeds: Legend count 1,232,444 → 1,425,703 (delta
+  +193,259); Herald count 865,841 → 743,294 (delta −122,547).
 - Page: opened in the Cursor browser against a local static server. Checks: headline
   counts match a hand calculation for June and August 2026; slider and `?month=`
   round-trip; play runs to the end and stops; OpenDota section appears with live data
