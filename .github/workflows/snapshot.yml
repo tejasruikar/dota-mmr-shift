@@ -1,0 +1,31 @@
+name: OpenDota snapshot
+
+on:
+  schedule:
+    - cron: "0 6 * * *"   # daily 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Fetch distribution
+        run: python scripts/snapshot.py
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- data/opendota.json; then
+            echo "No change"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/opendota.json
+          git commit -m "Add OpenDota snapshot $(date -u +%F)"
+          git push
