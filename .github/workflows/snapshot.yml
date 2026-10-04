@@ -2,7 +2,7 @@ name: OpenDota snapshot
 
 on:
   schedule:
-    - cron: "0 6 * * *"   # daily 06:00 UTC
+    - cron: "*/5 * * * *"   # every 5 minutes (GitHub's shortest schedule)
   workflow_dispatch:
 
 permissions:

@@ -30,10 +30,10 @@ class AppendTest(unittest.TestCase):
         new = {"date": "2026-10-12", "total": 2, "bins": {}}
         self.assertEqual(snapshot.append(existing, new), existing + [new])
 
-    def test_duplicate_date_is_noop(self):
+    def test_same_date_replaces_counts(self):
         existing = [{"date": "2026-10-05", "total": 1, "bins": {}}]
         dup = {"date": "2026-10-05", "total": 99, "bins": {"11": 1}}
-        self.assertEqual(snapshot.append(existing, dup), existing)
+        self.assertEqual(snapshot.append(existing, dup), [dup])
 
     def test_does_not_mutate_input(self):
         existing = []
@@ -85,6 +85,26 @@ class MainTest(unittest.TestCase):
             snapshot.main(path=path, fetch_fn=fetch_fn, today="2026-10-05")
             snapshot.main(path=path, fetch_fn=fetch_fn, today="2026-10-05")
             self.assertEqual(len(json.loads(path.read_text(encoding="utf-8"))), 1)
+
+    def test_second_run_same_day_refreshes_counts(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "opendota.json"
+            path.write_text("[]", encoding="utf-8")
+            snapshot.main(
+                path=path,
+                fetch_fn=lambda: (SAMPLE_ROWS, SAMPLE_TOTAL),
+                today="2026-10-05",
+            )
+            later = [
+                {"bin": 11, "count": 100},
+                {"bin": 12, "count": 200},
+                {"bin": 80, "count": 300},
+            ]
+            snapshot.main(path=path, fetch_fn=lambda: (later, 600), today="2026-10-05")
+            data = json.loads(path.read_text(encoding="utf-8"))
+            self.assertEqual(len(data), 1)
+            self.assertEqual(data[0]["total"], 600)
+            self.assertEqual(data[0]["bins"]["80"], 300)
 
 
 if __name__ == "__main__":

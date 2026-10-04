@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Dota 2 rank distribution since the June 2026 MMR change</title>
-<meta name="description" content="OpenDota public-profile medal counts before and after Valve raised lower-rank MMR gains in June 2026. Live fetch, daily snapshots.">
+<meta name="description" content="OpenDota public-profile medal counts before and after Valve raised lower-rank MMR gains in June 2026. Daily snapshots, no live API calls from the page.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Dota 2 rank distribution since the June 2026 MMR change">
-<meta property="og:description" content="How Crusader, Archon, and Legend shifted after wins started paying +35 to +40 at lower ranks. OpenDota public profiles, live plus daily snapshots.">
+<meta property="og:description" content="How Crusader, Archon, and Legend shifted after wins started paying +35 to +40 at lower ranks. OpenDota public profiles, updated once a day.">
 <meta property="og:url" content="https://tejasruikar.github.io/dota-mmr-shift/">
 <meta property="og:image" content="https://tejasruikar.github.io/dota-mmr-shift/og-image.png">
 <meta property="og:image:width" content="1200">
@@ -66,7 +66,7 @@ td .sub{display:block;font-size:12px;color:var(--muted)}
 <body>
 <main>
 <h1>Dota 2 rank distribution since the June 2026 MMR change</h1>
-<p class="muted">From about 18 June 2026, ranked wins below roughly 4k MMR pay +35 to +40 while losses stay near −25. Counts below are OpenDota public profiles, fetched live when you open this page.</p>
+<p class="muted">From about 18 June 2026, ranked wins below roughly 4k MMR pay +35 to +40 while losses stay near −25. Counts below are OpenDota public profiles, saved once a day into this page. Opening it does not call OpenDota.</p>
 <div id="error" class="hidden" style="color:var(--down)"></div>
 
 <section id="headline" class="hidden">
@@ -109,7 +109,7 @@ td .sub{display:block;font-size:12px;color:var(--muted)}
 
 <section id="change-section" class="hidden">
   <h2>Change by bracket</h2>
-  <p class="muted small">"Now" is OpenDota's current distribution. Each change column uses the latest saved snapshot at or before that date. 2 Aug 2026 is the earliest saved point after the gain change; 25 Jan 2025 is the last saved point before it.</p>
+  <p class="muted small">"Now" is the latest saved snapshot. Each change column uses the latest saved snapshot at or before that date. 2 Aug 2026 is the earliest saved point after the gain change; 25 Jan 2025 is the last saved point before it.</p>
   <div class="controls">
     <button id="change-medal" class="on">8 medals</button>
     <button id="change-star">36 stars</button>
@@ -137,9 +137,9 @@ td .sub{display:block;font-size:12px;color:var(--muted)}
 
 <section id="method">
   <h2>Method and sources</h2>
-  <p class="small">All numbers are from <a href="https://api.opendota.com/api/distributions">OpenDota's distribution endpoint</a>: public profiles OpenDota has seen. Hidden profiles are missing; inactive ones stay. The page fetches that endpoint once on load. A daily job at 06:00 UTC saves a copy into this repo.</p>
+  <p class="small">All numbers are from <a href="https://api.opendota.com/api/distributions">OpenDota's distribution endpoint</a>: public profiles OpenDota has seen. Hidden profiles are missing; inactive ones stay. A GitHub Action refreshes today's snapshot every 5 minutes. The page only reads that file, so public traffic does not count against OpenDota's quota.</p>
   <p class="small">The last snapshot before 18 June 2026 is 25 January 2025. Wayback also has 5 and 22 August 2024. The first snapshot after the change is 2 August 2026. Nothing exists for June or July 2026, so the day-to-day chart cannot start until consecutive daily saves (from 30 September 2026).</p>
-  <p class="small">OpenDota's free API allows 60 calls per minute and 3,000 per day with no key. This page uses one call per visit plus one per day from the cron.</p>
+  <p class="small">OpenDota's free API allows 60 calls per minute and 3,000 per day with no key. This project uses one call every 5 minutes from the cron (GitHub Actions will not schedule a job every minute). Same-day runs overwrite today's row; the day-to-day chart still has one point per date.</p>
   <p class="small">First reports of the gain change: <a href="https://www.reddit.com/r/DotA2/comments/1ud01rb/mmr_gainloss_changes/">MMR gain/loss changes</a>, <a href="https://www.reddit.com/r/DotA2/comments/1umk2in/can_we_get_some_confirmation_on_what_is_going_on/">confirmation thread</a>, <a href="https://www.reddit.com/r/DotA2/comments/1v67mtd/from_cruzader_to_ancient_in_weeks_new_mmr_cheated/">Crusader to Ancient</a>.</p>
   <p class="small"><button id="copy-link">Copy link</button> <span id="copied" class="muted small"></span></p>
   <p class="caption">Source: <a href="https://github.com/tejasruikar/dota-mmr-shift">tejasruikar/dota-mmr-shift</a>.</p>
@@ -212,14 +212,7 @@ function eventFractionOnDates(dates, iso){
   return (d-a)/(b-a);
 }
 function seriesPoints(){
-  const snaps=state.snapshots.map(s=>({...s}));
-  const now=state.opendota;
-  if (now){
-    const entry={date:now.date, bins:now.bins, total:now.total};
-    const i=snaps.findIndex(s=>s.date===now.date);
-    if (i>=0) snaps[i]=entry; else snaps.push(entry);
-  }
-  return snaps.sort((a,b)=>a.date.localeCompare(b.date));
+  return state.snapshots.slice().sort((a,b)=>a.date.localeCompare(b.date));
 }
 
 function drawGroupedBars(barsEl, xEl, groups, yMax){
@@ -304,7 +297,7 @@ function renderHeadline(){
     el.appendChild(card);
   }
   document.getElementById("headline-note").textContent =
-    `${fmt(now.total)} public profiles today${now.live?" (live)":""}. Before snapshot: ${before.date} (${fmt(before.total)} profiles). Source: api.opendota.com/api/distributions.`;
+    `${fmt(now.total)} public profiles on ${now.date} (latest saved snapshot). Before snapshot: ${before.date} (${fmt(before.total)} profiles). Source: api.opendota.com/api/distributions.`;
   document.getElementById("medal-table-title").textContent = `All medals: ${before.date} vs ${now.date}`;
   let h=`<thead><tr><th>Medal</th><th>${before.date}</th><th>${now.date}</th><th>Change</th><th>Share then</th><th>Share now</th><th>Change</th></tr></thead><tbody>`;
   for (const m of MEDALS){
@@ -330,7 +323,7 @@ function renderOverlay(){
   document.getElementById("legend-after").textContent = now.date + " (after)";
   document.getElementById("overlay-title").textContent = `Share of public profiles by medal — ${before.date} vs ${now.date}`;
   document.getElementById("overlay-caption").textContent =
-    `Source: api.opendota.com/api/distributions · before is the last saved snapshot dated before 18 June 2026 · after is ${now.live?"fetched on page load":"the latest saved snapshot"} · y-axis 0 to ${yMax}%`;
+    `Source: api.opendota.com/api/distributions · before is the last saved snapshot dated before 18 June 2026 · after is the latest saved snapshot · y-axis 0 to ${yMax}%`;
   document.getElementById("overlay-section").classList.remove("hidden");
 }
 
@@ -353,7 +346,7 @@ function renderShareOverTime(){
   });
   document.getElementById("share-legend").innerHTML=series.map(s=>`<span style="color:${s.color}">${s.name}</span>`).join("");
   document.getElementById("share-caption").textContent=
-    `Source: saved OpenDota snapshots${state.opendota?.live?" plus live fetch":""} · ${cats[0]} to ${cats[cats.length-1]} · ${pts.length} points · x proportional to date · no snapshots exist for June–July 2026`;
+    `Source: saved OpenDota snapshots · ${cats[0]} to ${cats[cats.length-1]} · ${pts.length} points · x proportional to date · no snapshots exist for June–July 2026`;
   document.getElementById("share-section").classList.remove("hidden");
 }
 
@@ -402,7 +395,7 @@ function renderChangeTable(){
     h+=`</tr>`;
   }
   document.getElementById("change-table").innerHTML=h+"</tbody>";
-  document.getElementById("change-now").textContent=`${fmt(now.total)} public profiles · ${now.live ? "live from OpenDota" : "latest saved snapshot"}`;
+  document.getElementById("change-now").textContent=`${fmt(now.total)} public profiles · latest saved snapshot`;
   document.getElementById("change-caption").textContent=
     `Source: api.opendota.com/api/distributions and ${snaps.length} saved snapshots, ${snaps[0].date} to ${snaps[snaps.length-1].date}. 7- and 30-day columns appear once a snapshot within 3 and 7 days of the target exists.`;
   document.getElementById("change-section").classList.remove("hidden");
@@ -443,20 +436,6 @@ function paint(){
   if (state.snapshots.length) renderChangeTable();
 }
 
-async function fetchLive(timeoutMs=10000){
-  const ctrl=new AbortController();
-  const t=setTimeout(()=>ctrl.abort(), timeoutMs);
-  try {
-    const r=await fetch("https://api.opendota.com/api/distributions", {signal:ctrl.signal});
-    if (!r.ok) throw new Error("HTTP "+r.status);
-    const j=await r.json();
-    const bins={}; for (const row of j.ranks.rows) bins[String(row.bin)]=row.count;
-    return {bins, total:j.ranks.sum.count, date:new Date().toISOString().slice(0,10), live:true};
-  } finally {
-    clearTimeout(t);
-  }
-}
-
 async function init(){
   try { const snaps=await loadJSON("data/opendota.json"); if (Array.isArray(snaps)) state.snapshots=snaps; }
   catch (e) { console.warn("snapshots skipped:", e.message); }
@@ -467,14 +446,11 @@ async function init(){
     document.getElementById("change-medal").addEventListener("click", ()=>setChangeView("medal"));
     document.getElementById("change-star").addEventListener("click", ()=>setChangeView("star"));
     paint();
+  } else {
+    document.getElementById("error").textContent="Could not load OpenDota data.";
+    document.getElementById("error").classList.remove("hidden");
+    return;
   }
-  try {
-    state.opendota=await fetchLive();
-    paint();
-  } catch (e) {
-    console.warn("live fetch skipped:", e.message);
-  }
-  if (!state.opendota){ document.getElementById("error").textContent="Could not load OpenDota data."; document.getElementById("error").classList.remove("hidden"); return; }
   setupBreakEven();
 }
 init().catch(err=>{ const e=document.getElementById("error"); e.textContent="Could not load data: "+err.message; e.classList.remove("hidden"); });

@@ -1,6 +1,7 @@
-"""Append today's OpenDota rank distribution to data/opendota.json.
+"""Append or refresh today's OpenDota rank distribution in data/opendota.json.
 
-Run by .github/workflows/snapshot.yml daily. Safe to rerun: one entry per date.
+Run by .github/workflows/snapshot.yml. One entry per UTC date; same-day reruns
+replace that day's counts so frequent cron keeps "now" fresh.
 """
 from __future__ import annotations
 
@@ -30,9 +31,8 @@ def to_entry(rows: list[dict], total: int, date: str) -> dict:
 
 
 def append(entries: list[dict], entry: dict) -> list[dict]:
-    if any(e["date"] == entry["date"] for e in entries):
-        return list(entries)
-    return sorted([*entries, entry], key=lambda e: e["date"])
+    out = [e for e in entries if e["date"] != entry["date"]]
+    return sorted([*out, entry], key=lambda e: e["date"])
 
 
 def main(path: Path = DATA_PATH, fetch_fn=fetch, today: str | None = None) -> int:
@@ -45,10 +45,12 @@ def main(path: Path = DATA_PATH, fetch_fn=fetch, today: str | None = None) -> in
     entries = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
     updated = append(entries, to_entry(rows, total, today))
     if updated != entries:
+        existed = any(e["date"] == today for e in entries)
         path.write_text(json.dumps(updated, indent=2) + "\n", encoding="utf-8")
-        print(f"added snapshot for {today} ({total} profiles)")
+        action = "refreshed" if existed else "added"
+        print(f"{action} snapshot for {today} ({total} profiles)")
     else:
-        print(f"snapshot for {today} already present")
+        print(f"snapshot for {today} unchanged")
     return 0
 
 
